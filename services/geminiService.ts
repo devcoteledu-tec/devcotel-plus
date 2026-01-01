@@ -1,9 +1,22 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Initialize lazily to ensure process.env.API_KEY is available and valid
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      console.warn("Gemini API Key is missing. AI features will be disabled.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey: apiKey || 'dummy-key' });
+  }
+  return aiInstance;
+};
 
 export const getCareerGuidance = async (age: number, goal: string, interests: string[]) => {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Recommend a learning path and 3 project ideas for a ${age} year old student whose career goal is "${goal}" and interests include ${interests.join(', ')}. Format the output as JSON.`,
