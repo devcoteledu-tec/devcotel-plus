@@ -9,7 +9,9 @@ import {
   Share2, 
   Users,
   Info,
-  Loader2
+  Loader2,
+  Search,
+  X
 } from 'lucide-react';
 
 const getTypeColorClasses = (type?: string): string => {
@@ -178,6 +180,7 @@ const Courses: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const tabs = ['All', 'Courses', 'Bootcamps', 'Webinars', 'YouTube Videos'];
   
@@ -302,13 +305,28 @@ const Courses: React.FC = () => {
   };
 
   const filteredCourses = courses.filter(c => {
-      if (activeTab === 'All') return true;
-      const type = c.type?.toLowerCase();
-      if (activeTab === 'Courses') return type === 'course';
-      if (activeTab === 'Bootcamps') return type === 'bootcamp';
-      if (activeTab === 'Webinars') return type === 'webinar';
-      if (activeTab === 'YouTube Videos') return type === 'youtube' || type === 'youtube video';
-      return true;
+      // Tab Filter
+      let passTab = true;
+      if (activeTab !== 'All') {
+          const type = c.type?.toLowerCase();
+          if (activeTab === 'Courses') passTab = type === 'course';
+          else if (activeTab === 'Bootcamps') passTab = type === 'bootcamp';
+          else if (activeTab === 'Webinars') passTab = type === 'webinar';
+          else if (activeTab === 'YouTube Videos') passTab = type === 'youtube' || type === 'youtube video';
+      }
+
+      // Search Filter
+      let passSearch = true;
+      if (searchTerm.trim() !== '') {
+          const query = searchTerm.toLowerCase();
+          passSearch = 
+            c.title.toLowerCase().includes(query) || 
+            c.category.toLowerCase().includes(query) || 
+            (c.description || '').toLowerCase().includes(query) ||
+            (c.provider || '').toLowerCase().includes(query);
+      }
+
+      return passTab && passSearch;
   });
 
   return (
@@ -323,6 +341,28 @@ const Courses: React.FC = () => {
           <p className="text-slate-500 text-lg max-w-2xl mx-auto font-medium leading-relaxed">
             Find premium resources vetted by the community. Join groups to slash prices by up to 40%.
           </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto mb-12 relative group">
+          <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search for skills, providers, or course titles..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white border-2 border-slate-100 py-4 pl-14 pr-12 rounded-[1.5rem] shadow-sm focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all font-bold text-slate-700 placeholder:text-slate-400"
+          />
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm('')}
+              className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Tab Filters */}
@@ -366,7 +406,15 @@ const Courses: React.FC = () => {
             <div className="text-center py-32 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
                 <Info className="mx-auto text-slate-300 mb-4" size={56} />
                 <h3 className="text-2xl font-black text-slate-900">No matches found</h3>
-                <p className="text-slate-500 mt-2 font-medium">Try checking a different category or content type.</p>
+                <p className="text-slate-500 mt-2 font-medium">Try adjusting your filters or checking for typos in your search.</p>
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="mt-6 text-indigo-600 font-black text-xs uppercase tracking-widest hover:underline"
+                  >
+                    Clear Search
+                  </button>
+                )}
             </div>
         )}
       </div>
